@@ -20,7 +20,7 @@ def main():
             # Can we refresh the token?
             refresh_token()
     except NoTokenError as e:
-        bot_logger.error(f"Not authorized, try running `kerai-bot auth`")
+        bot_logger.error("Not authorized, try running `kerai-bot auth`")
         sys.exit(1)
 
     bot_logger.info("Authorized, starting bot...")

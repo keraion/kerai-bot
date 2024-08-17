@@ -18,6 +18,7 @@ from keraibot.errors import InvalidTokenError, NoTokenError
 AUTH_ENDPOINT = "https://id.twitch.tv/oauth2/authorize"
 TOKEN_ENDPOINT = "https://id.twitch.tv/oauth2/token"
 VALIDATE_ENDPOINT = "https://id.twitch.tv/oauth2/validate"
+REVOKE_ENDPOINT = "https://id.twitch.tv/oauth2/revoke"
 PORT = 8080
 AUTH_JSON = "data/auth.json"
 config = dotenv_values(".env")
@@ -96,10 +97,11 @@ def authorize():
 
 
 def refresh_token():
-    if not Path(AUTH_JSON).exists():
+    auth_path = Path(AUTH_JSON)
+    if not auth_path.exists():
         bot_logger.error("No token found for refresh.")
         raise NoTokenError()
-    with open(AUTH_JSON, "r", encoding="utf8") as jfp:
+    with auth_path.open("r", encoding="utf8") as jfp:
         token = json.load(jfp)
     response = requests.post(
         TOKEN_ENDPOINT,
@@ -122,10 +124,11 @@ def refresh_token():
 
 
 def validate():
-    if not Path(AUTH_JSON).exists():
+    auth_path = Path(AUTH_JSON)
+    if not auth_path.exists():
         bot_logger.error("No token found to validate.")
         raise NoTokenError()
-    with open(AUTH_JSON, "r", encoding="utf8") as jfp:
+    with auth_path.open("r", encoding="utf8") as jfp:
         token = json.load(jfp)
     response = requests.get(
         VALIDATE_ENDPOINT,
@@ -137,3 +140,27 @@ def validate():
         bot_logger.error(response.text)
         raise InvalidTokenError(f"{response.status_code}: {response.text}")
     bot_logger.info("Token validated!")
+
+
+def invalidate():
+    auth_path = Path(AUTH_JSON)
+    if not auth_path.exists():
+        bot_logger.error("No token found to invalidate.")
+        raise NoTokenError()
+    with auth_path.open("r", encoding="utf8") as jfp:
+        token = json.load(jfp)
+    response = requests.post(
+        REVOKE_ENDPOINT,
+        data={
+            "client_id": config["CLIENT_ID"],
+            "token": token["access_token"],
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=10,
+    )
+    if not response.ok:
+        bot_logger.error("Unable to invalidate token.")
+        bot_logger.error(response.text)
+        raise InvalidTokenError(f"{response.status_code}: {response.text}")
+    auth_path.unlink()
+    bot_logger.info("Token invalidated!")

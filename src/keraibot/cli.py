@@ -15,6 +15,11 @@ def auth():
     keraibot.auth.authorize()
 
 @cli.command()
+def invalidate():
+    """CLI to invalidate a token."""
+    keraibot.auth.invalidate()
+
+@cli.command()
 def run():
     """Start the bot."""
     keraibot.bot.main()
