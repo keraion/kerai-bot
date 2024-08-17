@@ -19,7 +19,7 @@ def main():
         except InvalidTokenError:
             # Can we refresh the token?
             refresh_token()
-    except NoTokenError as e:
+    except NoTokenError:
         bot_logger.error("Not authorized, try running `kerai-bot auth`")
         sys.exit(1)
 
