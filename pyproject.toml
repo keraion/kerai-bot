@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = ["requests", "requests-oauthlib", "click", "python-dotenv"]
 
 [project.scripts]
+kerai-bot = "keraibot.core.cli:cli"
 
 [tool.pylint]
 disable = ["W1203", "W0718"]

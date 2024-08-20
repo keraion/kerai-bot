@@ -2,24 +2,28 @@
 
 import click
 
-import keraibot.auth
-import keraibot.bot
+from keraibot.core.config import TWITCH_AUTH
+import keraibot.core.bot
+
 
 @click.group()
 def cli() -> None:
     """kerai-bot, a twitch chatbot!"""
 
+
 @cli.command()
 def auth():
     """Authorize the bot from the `auth` command."""
-    keraibot.auth.authorize()
+    TWITCH_AUTH.authorize()
+
 
 @cli.command()
 def invalidate():
     """CLI to invalidate a token."""
-    keraibot.auth.invalidate()
+    TWITCH_AUTH.invalidate()
+
 
 @cli.command()
 def run():
     """Start the bot."""
-    keraibot.bot.main()
+    keraibot.core.bot.main()
