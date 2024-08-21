@@ -4,7 +4,6 @@ from dotenv import dotenv_values
 
 from keraibot.core.auth import TwitchAuth
 from keraibot.core.commands import CommandManager
-from keraibot.commands import commands
 
 bot_cfg = configparser.ConfigParser()
 bot_cfg.read("bot.cfg")
@@ -27,5 +26,3 @@ TWITCH_AUTH = TwitchAuth(
 )
 
 COMMANDS = CommandManager()
-for command in commands:
-    COMMANDS.new_command(command)
