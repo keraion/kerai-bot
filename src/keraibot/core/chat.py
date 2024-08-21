@@ -1,38 +1,23 @@
 import asyncio
-from datetime import datetime
 import json
 import logging
 import signal
 import sys
-from functools import lru_cache
 
 import requests
 import websockets.client
 
-from keraibot.core.config import COMMANDS, TWITCH_AUTH, CHAT_CHANNEL_USER_ID, BOT_USER_ID
+from keraibot.core.config import (
+    COMMANDS,
+    TWITCH_AUTH,
+    TWITCH_API,
+    CHAT_CHANNEL_USER_ID,
+    BOT_USER_ID,
+)
 
 TWITCH_EVENTSUB_URL = "wss://eventsub.wss.twitch.tv/ws"
 
 bot_logger = logging.getLogger("kerai-bot.chat")
-
-
-@TWITCH_AUTH.requires_token
-@lru_cache
-def get_id_from_login(login: str):
-    response = requests.get(
-        "https://api.twitch.tv/helix/users",
-        data=json.dumps({"login": login}),
-        headers={
-            "Authorization": f"Bearer {TWITCH_AUTH.token.access_token}",
-            "Client-Id": TWITCH_AUTH.client_id,
-            "Content-Type": "application/json",
-        },
-        timeout=10,
-    )
-    if response.ok:
-        user_id = response.json()["data"][0]["id"]
-        bot_logger.info(f"{login}'s id is {user_id}")
-        return user_id
 
 
 class TwitchEventSub:
@@ -75,8 +60,10 @@ class TwitchEventSub:
                     "type": "channel.chat.message",
                     "version": 1,
                     "condition": {
-                        "broadcaster_user_id": get_id_from_login(CHAT_CHANNEL_USER_ID),
-                        "user_id": get_id_from_login(BOT_USER_ID),
+                        "broadcaster_user_id": TWITCH_API.get_id_from_login(
+                            CHAT_CHANNEL_USER_ID
+                        ),
+                        "user_id": TWITCH_API.get_id_from_login(BOT_USER_ID),
                     },
                     "transport": {
                         "method": "websocket",
@@ -120,8 +107,8 @@ def send_message(msg):
         "https://api.twitch.tv/helix/chat/messages",
         data=json.dumps(
             {
-                "broadcaster_id": get_id_from_login(CHAT_CHANNEL_USER_ID),
-                "sender_id": get_id_from_login(BOT_USER_ID),
+                "broadcaster_id": TWITCH_API.get_id_from_login(CHAT_CHANNEL_USER_ID),
+                "sender_id": TWITCH_API.get_id_from_login(BOT_USER_ID),
                 "message": msg,
             }
         ),

@@ -2,6 +2,7 @@ import configparser
 
 from dotenv import dotenv_values
 
+from keraibot.core.api import TwitchAPI
 from keraibot.core.auth import TwitchAuth
 from keraibot.core.commands import CommandManager
 
@@ -24,5 +25,5 @@ TWITCH_AUTH = TwitchAuth(
         "user:write:chat",
     ],
 )
-
+TWITCH_API = TwitchAPI(TWITCH_AUTH)
 COMMANDS = CommandManager()
