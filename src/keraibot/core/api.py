@@ -41,11 +41,10 @@ class TwitchAPI:
     def user_info_by_login(self, login: str):
         response = requests.get(
             "https://api.twitch.tv/helix/users",
-            data=json.dumps({"login": login}),
+            params={"login": login},
             headers={
                 "Authorization": f"Bearer {self.auth.token.access_token}",
                 "Client-Id": self.auth.client_id,
-                "Content-Type": "application/json",
             },
             timeout=10,
         )
@@ -55,7 +54,7 @@ class TwitchAPI:
     @lru_cache
     def get_id_from_login(self, login: str):
         response = self.user_info_by_login(login)
-        if response.ok:
+        if response.ok and response.json()["data"]:
             user_id = response.json()["data"][0]["id"]
             bot_logger.info(f"{login}'s id is {user_id}")
             return user_id
