@@ -2,10 +2,11 @@ import asyncio
 import logging
 import sys
 
-from keraibot.core.config import TWITCH_AUTH
+from keraibot.commands.responses import commands
+from keraibot.core.chat import TwitchEventSub
+from keraibot.core.config import COMMANDS, TWITCH_AUTH
 from keraibot.core.errors import InvalidTokenError, NoTokenError
 from keraibot.core.utils import scheduled_task
-from keraibot.core.chat import TwitchEventSub
 
 bot_logger = logging.getLogger("kerai-bot.bot")
 logging.basicConfig(
@@ -13,6 +14,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+
+for command in commands:
+    COMMANDS.new_command(command)
 
 
 async def run_bot():
