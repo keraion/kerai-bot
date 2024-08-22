@@ -24,14 +24,14 @@ class TwitchAPI:
         return aux
 
     @requires_auth
-    def stream_info_by_login(self, login: str):
+    def channel_info_by_login(self, login: str):
+        broadcaster_id = self.get_id_from_login(login)
         response = requests.get(
-            "https://api.twitch.tv/helix/streams",
-            data=json.dumps({"user_login": login}),
+            "https://api.twitch.tv/helix/channels",
+            params={"broadcaster_id": broadcaster_id},
             headers={
                 "Authorization": f"Bearer {self.auth.token.access_token}",
                 "Client-Id": self.auth.client_id,
-                "Content-Type": "application/json",
             },
             timeout=10,
         )

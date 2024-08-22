@@ -7,6 +7,7 @@ import sys
 import requests
 import websockets.client
 
+from keraibot.core.commands import Permission
 from keraibot.core.config import (
     COMMANDS,
     TWITCH_AUTH,
@@ -133,6 +134,8 @@ def send_message(msg):
 
 def handle_command(message_json):
     user_message: str = message_json["payload"]["event"]["message"]["text"]
+    broadcaster_id: str = message_json["payload"]["event"]["broadcaster_user_id"]
+    user_id: str = message_json["payload"]["event"]["chatter_user_id"]
     if not user_message.startswith("!"):
         return
     command_name, *command_args = user_message.split(" ")
@@ -140,5 +143,26 @@ def handle_command(message_json):
     if (command := COMMANDS.get(command_name)) is None:
         bot_logger.info("Command not found!")
         return
-    if command.can_send:
-        send_message(command.reply)
+    if command.can_send and has_permissions(
+        user_id, broadcaster_id, command.permissions
+    ):
+        message = command.reply(*command_args)
+        bot_logger.info(message)
+        if message:
+            send_message(message)
+
+
+def has_permissions(user: str, broadcaster_id: str, command_permissions: Permission):
+    # This is a cheap check, go first
+    match command_permissions:
+        case Permission.VIEWER:
+            return True
+        case Permission.BROADCASTER:
+            return is_broadcaster(user, broadcaster_id)
+    return False
+
+
+def is_broadcaster(user: str, broadcaster_id: str):
+    if user == broadcaster_id:
+        return True
+    return False

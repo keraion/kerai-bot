@@ -1,14 +1,24 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import Enum
 from typing import Optional
+
+
+class Permission(Enum):
+    VIEWER = 1
+    # FOLLOWER = 2 # TODO
+    # VIP = 4 # TODO
+    # MOD = 8 # TODO
+    BROADCASTER = 16
 
 
 @dataclass
 class ChatCommand:
     name: str
-    reply: Optional[str]
+    reply: Optional[callable]
     cooldown_seconds: Optional[int] = 30
     last_sent: Optional[datetime] = None
+    permissions: Permission = Permission.VIEWER
 
     @property
     def cooldown(self) -> Optional[timedelta]:
