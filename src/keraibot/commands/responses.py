@@ -13,13 +13,14 @@ def shoutout(*args):
     if not channel_info_response.ok:
         bot_logger.error(f"Couldn't find user {user}.")
         return
-    channel_info = channel_info_response.json()
-    user_login = channel_info["data"][0]["broadcaster_login"]
-    user_name = channel_info["data"][0]["broadcaster_name"]
-    category = channel_info["data"][0]["game_name"]
+    channel_info = channel_info_response.json()["data"][0]
+    user_login = channel_info["broadcaster_login"]
+    user_name = channel_info["broadcaster_name"]
+    category = channel_info["game_name"]
     if category:
         return (
-            f"You should probably check out {user_name} at https://twitch.tv/{user_login} "
+            f"You should probably check out {user_name} "
+            f"at https://twitch.tv/{user_login} "
             f"they were last playing {category}!"
         )
 
@@ -27,7 +28,9 @@ def shoutout(*args):
 commands = [
     ChatCommand(
         name="sqlfluff",
-        reply=lambda *args: "The sql linter I work on from time to time: https://sqlfluff.com",
+        reply=lambda *args: (
+            "The sql linter I work on from time to time: https://sqlfluff.com"
+        ),
     ),
     ChatCommand(
         name="status",
