@@ -183,6 +183,7 @@ class TwitchAuth:
         bot_logger.info("Running validation.")
         self.validate()
 
+    @requires_token
     def validate(self):
         response = requests.get(
             self.validate_endpoint,
