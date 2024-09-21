@@ -29,7 +29,13 @@ commands = [
     ChatCommand(
         name="sqlfluff",
         reply=lambda *args: (
-            "The sql linter I work on from time to time: https://sqlfluff.com"
+            "The sql linter I work on from time to time: https://sqlfluff.com or on GitHub: https://github.com/sqlfluff/sqlfluff"
+        ),
+    ),
+    ChatCommand(
+        name="today",
+        reply=lambda *args: (
+            "Working on generating a database of fake data for creating example pipelines!"
         ),
     ),
     ChatCommand(

@@ -42,7 +42,7 @@ class ChatCommand:
 class CommandManager:
     commands: dict[str, ChatCommand] = {}
 
-    def new_command(self, command):
+    def register_command(self, command):
         self.commands[command.name] = command
 
     def get(self, name):

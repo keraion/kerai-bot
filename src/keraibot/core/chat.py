@@ -3,8 +3,10 @@ import json
 import logging
 import signal
 import sys
+from typing import Optional
 
 import requests
+from websockets import WebSocketClientProtocol
 import websockets.client
 
 from keraibot.core.commands import Permission
@@ -16,7 +18,9 @@ from keraibot.core.config import (
     BOT_USER_ID,
 )
 
-TWITCH_EVENTSUB_URL = "wss://eventsub.wss.twitch.tv/ws"
+
+TWITCH_EVENTSUB_SUBSCRIPTIONS = f"{TWITCH_API.api_url}/eventsub/subscriptions"
+TWITCH_CHAT_MESSAGES = f"{TWITCH_API.api_url}/chat/messages"
 
 bot_logger = logging.getLogger("kerai-bot.chat")
 
@@ -24,8 +28,11 @@ bot_logger = logging.getLogger("kerai-bot.chat")
 class TwitchEventSub:
     websocket_id: str
 
-    async def run_client(self):
-        async with websockets.client.connect(TWITCH_EVENTSUB_URL) as websocket:
+    async def run_client(
+        self,
+        websocket_url: str = "wss://eventsub.wss.twitch.tv/ws",
+    ):
+        async with websockets.client.connect(websocket_url) as websocket:
             # Close the connection when receiving SIGTERM.
             loop = asyncio.get_running_loop()
 
@@ -45,6 +52,12 @@ class TwitchEventSub:
                             await self.add_eventsub_listeners()
                         case "session_keepalive":
                             pass
+                        case "session_reconnect":
+                            self.websocket_id = message_json["payload"]["session"]["id"]
+                            await self.run_client(
+                                message_json["payload"]["session"]["reconnect_url"],
+                            )
+                            websocket.close()
                         case "notification":
                             handle_notification(message_json)
                         case _:
@@ -55,7 +68,7 @@ class TwitchEventSub:
     @TWITCH_AUTH.requires_token
     async def add_eventsub_listeners(self):
         response = requests.post(
-            "https://api.twitch.tv/helix/eventsub/subscriptions",
+            TWITCH_EVENTSUB_SUBSCRIPTIONS,
             data=json.dumps(
                 {
                     "type": "channel.chat.message",
@@ -80,11 +93,11 @@ class TwitchEventSub:
             timeout=10,
         )
         if response.status_code != 202:
-            data = response.json()
             bot_logger.error(
                 "Failed to subscribe to channel.chat.message. "
                 f"API call returned status code {response.status_code}"
             )
+            data = response.json()
             bot_logger.error(data)
             sys.exit(1)
         else:
@@ -105,7 +118,7 @@ def handle_notification(message_json):
 @TWITCH_AUTH.requires_token
 def send_message(msg):
     response = requests.post(
-        "https://api.twitch.tv/helix/chat/messages",
+        TWITCH_CHAT_MESSAGES,
         data=json.dumps(
             {
                 "broadcaster_id": TWITCH_API.get_id_from_login(CHAT_CHANNEL_USER_ID),

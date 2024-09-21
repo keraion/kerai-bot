@@ -10,8 +10,13 @@ bot_logger = logging.getLogger("kerai-bot.api")
 
 
 class TwitchAPI:
-    def __init__(self, auth: TwitchAuth) -> None:
+    def __init__(
+        self,
+        auth: TwitchAuth,
+        api_url: str = "https://api.twitch.tv/helix/",
+    ) -> None:
         self.auth = auth
+        self.api_url = api_url
 
     @staticmethod
     def requires_auth(func):
@@ -26,7 +31,7 @@ class TwitchAPI:
     def channel_info_by_login(self, login: str):
         broadcaster_id = self.get_id_from_login(login)
         response = requests.get(
-            "https://api.twitch.tv/helix/channels",
+            f"{self.api_url}/channels",
             params={"broadcaster_id": broadcaster_id},
             headers={
                 "Authorization": f"Bearer {self.auth.token.access_token}",
@@ -39,7 +44,7 @@ class TwitchAPI:
     @requires_auth
     def user_info_by_login(self, login: str):
         response = requests.get(
-            "https://api.twitch.tv/helix/users",
+            f"{self.api_url}/users",
             params={"login": login},
             headers={
                 "Authorization": f"Bearer {self.auth.token.access_token}",

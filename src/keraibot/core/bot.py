@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 
 for command in commands:
-    COMMANDS.new_command(command)
+    COMMANDS.register_command(command)
 
 
 async def run_bot():

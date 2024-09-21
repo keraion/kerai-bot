@@ -8,7 +8,7 @@ import socketserver
 import threading
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Self
+from typing import Optional, Self
 from urllib.parse import parse_qs, urlparse
 
 import requests
@@ -39,13 +39,9 @@ class TwitchAuthToken:
 
 
 class TwitchAuth:
-    auth_endpoint = "https://id.twitch.tv/oauth2/authorize"
-    token_endpoint = "https://id.twitch.tv/oauth2/token"
-    validate_endpoint = "https://id.twitch.tv/oauth2/validate"
-    revoke_endpoint = "https://id.twitch.tv/oauth2/revoke"
-
     def __init__(
         self,
+        twitch_auth_url: Optional[str] = None,
         client_id: str = None,
         client_secret: str = None,
         redirect_url: str = "http://localhost",
@@ -53,6 +49,11 @@ class TwitchAuth:
         port: int = 8080,
         scope: list[str] = None,
     ) -> None:
+        twitch_auth_url = twitch_auth_url or "https://id.twitch.tv/oauth2"
+        self.auth_endpoint = f"{twitch_auth_url}/authorize"
+        self.token_endpoint = f"{twitch_auth_url}/token"
+        self.validate_endpoint = f"{twitch_auth_url}/validate"
+        self.revoke_endpoint = f"{twitch_auth_url}/revoke"
         self.client_id = client_id
         self.client_secret = client_secret
         self.port = port
