@@ -5,7 +5,8 @@ from dotenv import dotenv_values
 
 from keraibot.core.api import TwitchAPI
 from keraibot.core.auth import TwitchAuth
-from keraibot.core.commands import CommandManager
+from keraibot.core.command_manager import CommandManager
+from keraibot.core.commands import default_command_functions
 
 bot_cfg = configparser.ConfigParser()
 bot_cfg.read("bot.cfg")
@@ -18,7 +19,6 @@ if env.get("OAUTHLIB_INSECURE_TRANSPORT"):
 CHAT_CHANNEL_USER_ID = bot_cfg["keraibot"].get("broadcaster_login")
 BOT_USER_ID = bot_cfg["keraibot"].get("bot_login")
 TWITCH_AUTH = TwitchAuth(
-    twitch_auth_url=env.get("TWITCH_AUTH_URL"),
     client_id=env.get("CLIENT_ID"),
     client_secret=env.get("CLIENT_SECRET"),
     auth_json=bot_cfg["keraibot.auth"].get("auth_file"),
@@ -32,3 +32,5 @@ TWITCH_AUTH = TwitchAuth(
 )
 TWITCH_API = TwitchAPI(TWITCH_AUTH)
 COMMANDS = CommandManager()
+COMMANDS.functions.update(default_command_functions(TWITCH_API))
+COMMANDS.load_commands_from_db(bot_cfg["keraibot.commands"].get("db"))

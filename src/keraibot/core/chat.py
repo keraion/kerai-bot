@@ -9,7 +9,7 @@ import requests
 from websockets import WebSocketClientProtocol
 import websockets.client
 
-from keraibot.core.commands import Permission
+from keraibot.core.command_manager import Permission
 from keraibot.core.config import (
     COMMANDS,
     TWITCH_AUTH,
