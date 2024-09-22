@@ -13,7 +13,7 @@ class TwitchAPI:
     def __init__(
         self,
         auth: TwitchAuth,
-        api_url: str = "https://api.twitch.tv/helix/",
+        api_url: str = "https://api.twitch.tv/helix",
     ) -> None:
         self.auth = auth
         self.api_url = api_url

@@ -42,12 +42,12 @@ class TwitchAuth:
     def __init__(
         self,
         twitch_auth_url: Optional[str] = None,
-        client_id: str = None,
-        client_secret: str = None,
+        client_id: str = "",
+        client_secret: str = "",
         redirect_url: str = "http://localhost",
         auth_json: str = "data/auth.json",
         port: int = 8080,
-        scope: list[str] = None,
+        scope: Optional[list[str]] = None,
     ) -> None:
         twitch_auth_url = twitch_auth_url or "https://id.twitch.tv/oauth2"
         self.auth_endpoint = f"{twitch_auth_url}/authorize"
@@ -117,7 +117,6 @@ class TwitchAuth:
 
                     with auth_self.auth_file.open("w", encoding="utf8") as jfp:
                         json.dump(token, jfp)
-                    auth_self._token()
 
                     # Respond to the browser
                     self.send_response(200)
