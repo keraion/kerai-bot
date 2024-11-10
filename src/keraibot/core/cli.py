@@ -12,12 +12,6 @@ def cli() -> None:
 
 
 @cli.command()
-def auth():
-    """Authorize the bot from the `auth` command."""
-    TWITCH_AUTH.authorize()
-
-
-@cli.command()
 def invalidate():
     """CLI to invalidate a token."""
     TWITCH_AUTH.invalidate()

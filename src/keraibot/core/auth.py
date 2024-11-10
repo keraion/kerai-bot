@@ -6,35 +6,30 @@ import json
 import logging
 import socketserver
 import threading
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional, Self
 from urllib.parse import parse_qs, urlparse
 
 import requests
 from requests_oauthlib import OAuth2Session
+from twitchAPI.helper import build_scope
 
-from keraibot.core.errors import InvalidTokenError, NoTokenError
+from keraibot.core.errors import InvalidTokenError, NoTokenError, MissingScopeError
 
 bot_logger = logging.getLogger("kerai-bot.auth")
 
 
 @dataclass
 class TwitchAuthToken:
-    access_token: str
-    refresh_token: str
-    expires_in: int
-    scope: list[str]
-    token_type: str
+    token: str
+    refresh: str
 
     @classmethod
-    def from_json(cls, json_data):
+    def from_json(cls, json_data: dict):
         return cls(
-            json_data["access_token"],
-            json_data["refresh_token"],
-            json_data["expires_in"],
-            json_data["scope"],
-            json_data["token_type"],
+            json_data.get("access_token", json_data.get("token")),
+            json_data.get("refresh_token", json_data.get("refresh")),
         )
 
 
@@ -47,7 +42,6 @@ class TwitchAuth:
         redirect_url: str = "http://localhost",
         auth_json: str = "data/auth.json",
         port: int = 8080,
-        scope: Optional[list[str]] = None,
     ) -> None:
         twitch_auth_url = twitch_auth_url or "https://id.twitch.tv/oauth2"
         self.auth_endpoint = f"{twitch_auth_url}/authorize"
@@ -59,7 +53,6 @@ class TwitchAuth:
         self.port = port
         self.redirect_url = f"{redirect_url}:{port}"
         self.auth_file = Path(auth_json)
-        self.scope = scope or []
         self._token = None
 
     def load_token(self):
@@ -88,11 +81,12 @@ class TwitchAuth:
 
         return aux
 
-    def authorize(auth_self):  # pylint: disable=no-self-argument
+    def authorize(auth_self, scope):  # pylint: disable=no-self-argument
+        scope_list = build_scope(scope)
         oauth = OAuth2Session(
             auth_self.client_id,
             redirect_uri=auth_self.redirect_url,
-            scope=auth_self.scope,
+            scope=scope_list,
         )
 
         class OAuthHandler(http.server.SimpleHTTPRequestHandler):
@@ -115,8 +109,11 @@ class TwitchAuth:
                         include_client_id=True,
                     )
 
+                    auth_token = TwitchAuthToken.from_json(token)
+
                     with auth_self.auth_file.open("w", encoding="utf8") as jfp:
-                        json.dump(token, jfp)
+                        json.dump(asdict(auth_token), jfp)
+                    auth_self._token = None
 
                     # Respond to the browser
                     self.send_response(200)
@@ -155,15 +152,15 @@ class TwitchAuth:
             if "httpd" in locals():
                 httpd.server_close()
             bot_logger.info(f"Port {auth_self.port} cleared.")
-        auth_self.validate()
+        auth_self.validate(scope)
 
     @requires_token
-    def refresh_token(self):
+    def refresh_token(self, scope=None):
         response = requests.post(
             self.token_endpoint,
             data={
                 "grant_type": "refresh_token",
-                "refresh_token": self.token.refresh_token,
+                "refresh_token": self.token.refresh,
                 "client_id": self.client_id,
                 "client_secret": self.client_secret,
             },
@@ -171,10 +168,11 @@ class TwitchAuth:
             timeout=10,
         )
         if response.ok:
+            auth_token = TwitchAuthToken.from_json(response.json())
             with self.auth_file.open("w", encoding="utf8") as jfp:
-                json.dump(response.json(), jfp)
+                json.dump(asdict(auth_token), jfp)
             self._token = None
-            self.validate()
+            self.validate(scope)
         else:
             bot_logger.error("Unable to refresh token.")
             raise InvalidTokenError()
@@ -184,16 +182,23 @@ class TwitchAuth:
         self.validate()
 
     @requires_token
-    def validate(self):
+    def validate(self, scopes=None):
         response = requests.get(
             self.validate_endpoint,
-            headers={"Authorization": f"OAuth {self.token.access_token}"},
+            headers={"Authorization": f"OAuth {self.token.token}"},
             timeout=10,
         )
         if not response.ok:
             bot_logger.error("Unable to validate token.")
             bot_logger.error(response.text)
             raise InvalidTokenError(f"{response.status_code}: {response.text}")
+        scopes = scopes or []
+        scopes_set = response.json().get("scopes")
+        print(scopes_set)
+        for scope in scopes:
+            if scope.value not in scopes_set:
+                bot_logger.error(f"Scope {scope.value} missing from token.")
+                raise MissingScopeError()
         bot_logger.info("Token validated!")
 
     @requires_token
@@ -202,7 +207,7 @@ class TwitchAuth:
             self.revoke_endpoint,
             data={
                 "client_id": self.client_id,
-                "token": self.token.access_token,
+                "token": self.token.token,
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=10,

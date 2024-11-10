@@ -1,7 +1,15 @@
 [project]
 name = "kerai-bot"
-version = "0.1.0"
-dependencies = ["requests", "requests-oauthlib", "click", "python-dotenv"]
+version = "0.1.1"
+requires-python = ">= 3.10"
+dependencies = [
+    "requests",
+    "requests-oauthlib",
+    "click",
+    "python-dotenv",
+    "websockets",
+    "twitchapi",
+]
 
 [project.scripts]
 kerai-bot = "keraibot.core.cli:cli"
