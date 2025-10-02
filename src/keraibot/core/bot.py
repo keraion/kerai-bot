@@ -214,7 +214,7 @@ async def run_bot(broadcaster_name: str):
     finally:
         # now we can close the chat bot and the twitch api client
         chat.stop()
-        eventsub.stop()
+        await eventsub.stop()
         await twitch.close()
 
 
